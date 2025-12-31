@@ -36,3 +36,5 @@ tmp/
 # Expo 
 .expo/
 .expo-shared/
+
+*.jks

@@ -1,31 +1,40 @@
 {
-	"expo": {
-		"name": "Eliana Zabala Peluquería",
-		"slug": "hairsalon",
-		"version": "1.0.0",
-		"orientation": "default",
-		"icon": "./assets/icon.png",
-		"userInterfaceStyle": "light",
-		"splash": {
-			"image": "./assets/splash.png",
-			"resizeMode": "contain",
-			"backgroundColor": "#fdf2f8"
-		},
-		"assetBundlePatterns": ["**/*"],
-		"ios": {
-			"supportsTablet": true,
-			"bundleIdentifier": "com.hairsalon.app"
-		},
-		"android": {
-			"adaptiveIcon": {
-				"foregroundImage": "./assets/adaptive-icon.png",
-				"backgroundColor": "#fdf2f8"
-			},
-			"package": "com.hairsalon.app"
-		},
-		"web": {
-			"favicon": "./assets/favicon.png"
-		},
-		"plugins": ["expo-sqlite"]
-	}
+  "expo": {
+    "name": "Eliana Zabala Peluquería",
+    "slug": "hairsalon",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icons/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/icons/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#fdf2f8"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hairsalon.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icons/icon.png",
+        "backgroundColor": "#fdf2f8"
+      },
+      "package": "com.hairsalon.app"
+    },
+    "web": {
+      "favicon": "./assets/icons/icon.png"
+    },
+    "plugins": [
+      "expo-sqlite"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9d0c0774-e8b7-4303-adea-7533fa1dd0e2"
+      }
+    }
+  }
 }
