@@ -7,7 +7,10 @@ import {
 	StatusBar,
 	Alert,
 	TouchableOpacity,
+	
 } from 'react-native';
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -71,11 +74,13 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 			]
 		);
 	};
-
-	useEffect(() => {
-		navigation.setOptions({ title: clientName });
-		loadHistory();
-	}, [clientName]);
+		
+	useFocusEffect(
+		useCallback(() => {
+			navigation.setOptions({ title: clientName });
+			loadHistory();
+		}, [clientName])
+	);
 
 	const renderHistoryItem = ({ item }: { item: History }) => (
 		<View style={styles.row}>

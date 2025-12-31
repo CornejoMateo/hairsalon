@@ -7,7 +7,7 @@
     "icon": "./assets/icons/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/icons/icon.png",
+      "image": "./assets/icons/splash-2.png",
       "resizeMode": "contain",
       "backgroundColor": "#fdf2f8"
     },
@@ -29,7 +29,8 @@
       "favicon": "./assets/icons/icon.png"
     },
     "plugins": [
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-router"
     ],
     "extra": {
       "eas": {

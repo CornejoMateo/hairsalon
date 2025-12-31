@@ -9,6 +9,8 @@ import {
 	StatusBar,
 	TextInput,
 } from 'react-native';
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { getClients, deleteClient } from '../database/client';
@@ -40,9 +42,11 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 		}
 	};
 
-	useEffect(() => {
-		loadClients();
-	}, []);
+	useFocusEffect(
+		useCallback(() => {
+			loadClients(); 
+		}, [])
+	);
 
 	const filteredClients = clients.filter((client) => {
 		if (!searchText) return true;
