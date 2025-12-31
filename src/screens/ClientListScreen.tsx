@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { getClients } from '../database/client';
+import { getClients, deleteClient } from '../database/client';
 import Client from '../models/Client';
 import { main } from '../../constans/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -52,26 +52,62 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 		);
 	});
 
+	const handleDeleteClient = (client: Client) => {
+		Alert.alert(
+			'Eliminar clienta',
+			`¿Estás seguro de que deseas eliminar a ${client.name}? También se eliminará todo su historial.`,
+			[
+				{
+					text: 'Cancelar',
+					style: 'cancel',
+				},
+				{
+					text: 'Eliminar',
+					style: 'destructive',
+					onPress: () => {
+						try {
+							deleteClient(client.id || 0);
+							setClients(clients.filter((c) => c.id !== client.id));
+							Alert.alert('Éxito', 'Clienta eliminada correctamente');
+						} catch (error) {
+							Alert.alert('Error', 'No se pudo eliminar la clienta');
+							console.error(error);
+						}
+					},
+				},
+			]
+		);
+	};
+
 	const renderClient = ({ item }: { item: Client }) => (
-		<TouchableOpacity
-			style={styles.clientItem}
-			onPress={() =>
-				navigation.navigate('HistoryClient', {
-					clientId: item.id || 0,
-					clientName: item.name || 'Cliente',
-				})
-			}
-			activeOpacity={0.7}
-		>
-			<View style={[styles.avatar, { backgroundColor: main }]}>
-				<Text style={styles.avatarText}>{getInitials(item.name || null)}</Text>
-			</View>
-			<View style={styles.clientInfo}>
-				<Text style={styles.clientName}>{item.name}</Text>
-				<Text style={styles.clientPhone}>{item.phone ? '📱' : 'Sin teléfono'} {item.phone}</Text>
-			</View>
-			<Text style={styles.chevron}>›</Text>
-		</TouchableOpacity>
+		<View style={styles.clientItemWrapper}>
+			<TouchableOpacity
+				style={styles.clientItem}
+				onPress={() =>
+					navigation.navigate('HistoryClient', {
+						clientId: item.id || 0,
+						clientName: item.name || 'Cliente',
+					})
+				}
+				activeOpacity={0.7}
+			>
+				<View style={[styles.avatar, { backgroundColor: main }]}>
+					<Text style={styles.avatarText}>{getInitials(item.name || null)}</Text>
+				</View>
+				<View style={styles.clientInfo}>
+					<Text style={styles.clientName}>{item.name}</Text>
+					<Text style={styles.clientPhone}>{item.phone ? '📱' : 'Sin teléfono'} {item.phone}</Text>
+				</View>
+				<Text style={styles.chevron}>›</Text>
+			</TouchableOpacity>
+			<TouchableOpacity
+				style={styles.deleteButton}
+				onPress={() => handleDeleteClient(item)}
+				activeOpacity={0.7}
+			>
+				<Text style={styles.deleteIcon}>🗑️</Text>
+			</TouchableOpacity>
+		</View>
 	);
 
 	return (
@@ -211,11 +247,17 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingBottom: 20,
 	},
+	clientItemWrapper: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		marginBottom: 10,
+		gap: 8,
+	},
 	clientItem: {
+		flex: 1,
 		backgroundColor: '#FFFFFF',
 		paddingVertical: 16,
 		paddingHorizontal: 16,
-		marginBottom: 10,
 		borderRadius: 16,
 		flexDirection: 'row',
 		alignItems: 'center',
@@ -226,6 +268,20 @@ const styles = StyleSheet.create({
 		elevation: 3,
 		borderWidth: 1,
 		borderColor: '#F1F5F9',
+	},
+	deleteButton: {
+		width: 52,
+		height: 52,
+		justifyContent: 'center',
+		alignItems: 'center',
+		shadowColor: '#EF4444',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.15,
+		shadowRadius: 4,
+		elevation: 3,
+	},
+	deleteIcon: {
+		fontSize: 15,
 	},
 	avatar: {
 		width: 52,

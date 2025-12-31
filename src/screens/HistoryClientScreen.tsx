@@ -11,7 +11,7 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { getHistoryByClient } from '../database/history';
+import { getHistoryByClient, deleteHistory } from '../database/history';
 import History from '../models/History';
 import { main } from '../../constans/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,6 +45,33 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 		}
 	};
 
+	const handleDeleteHistory = (history: History) => {
+		Alert.alert(
+			'Eliminar servicio',
+			`¿Estás seguro de que deseas eliminar este servicio?`,
+			[
+				{
+					text: 'Cancelar',
+					style: 'cancel',
+				},
+				{
+					text: 'Eliminar',
+					style: 'destructive',
+					onPress: () => {
+						try {
+							deleteHistory(history.id || 0);
+							setHistory(prev => prev.filter(h => h.id !== history.id));
+							Alert.alert('Éxito', 'Servicio eliminado correctamente');
+						} catch (error) {
+							Alert.alert('Error', 'No se pudo eliminar el servicio');
+							console.error(error);
+						}
+					},
+				},
+			]
+		);
+	};
+
 	useEffect(() => {
 		navigation.setOptions({ title: clientName });
 		loadHistory();
@@ -55,6 +82,15 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 			<Text style={styles.cellDate}>{formatDate(item.date)}</Text>
 			<Text style={styles.cellDescription}>{item.description || '-'}</Text>
 			<Text style={styles.cellCost}>{formatCost(item.cost)}</Text>
+			<Text style={styles.cellAction}>
+				<TouchableOpacity
+					style={styles.deleteButton}
+					onPress={() => handleDeleteHistory(item)}
+					activeOpacity={0.7}
+				>
+					<Text style={styles.deleteIcon}>🗑️</Text>
+				</TouchableOpacity>
+			</Text>
 		</View>
 	);
 
@@ -86,6 +122,7 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 						<Text style={styles.headerCellDate}>Fecha</Text>
 						<Text style={styles.headerCellDescription}>Descripción</Text>
 						<Text style={styles.headerCellCost}>Costo</Text>
+						<Text style={styles.HeaderCellAction}>Eliminar</Text>
 					</View>
 
 					<FlatList
@@ -150,6 +187,13 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		textAlign: 'center',
 	},
+	HeaderCellAction: {
+		flex: 0.25,
+		color: '#FFFFFF',
+		fontWeight: 'bold',
+		fontSize: 14,
+		textAlign: 'center',
+	},
 	row: {
 		flexDirection: 'row',
 		paddingVertical: 14,
@@ -177,6 +221,11 @@ const styles = StyleSheet.create({
 		color: '#059669',
 		fontWeight: '600',
 		textAlign: 'center',
+	},
+	cellAction: {
+		flex: 0.25,
+		justifyContent: 'center',
+		alignItems: 'center',
 	},
 	loadingContainer: {
 		flex: 1,
@@ -245,4 +294,14 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontWeight: '700',
 	},
+	deleteButton: {
+		justifyContent: 'center',
+		alignItems: 'center',
+		width: '100%',
+	},
+	deleteIcon: {
+		textAlign: 'center',
+		alignItems: 'center',
+		justifyContent: 'center'
+	}
 });

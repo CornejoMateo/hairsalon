@@ -13,3 +13,7 @@ export const getClients = (): Client[] => {
 	const rows = db.getAllSync('SELECT * FROM clients');
 	return rows.map((row) => Client.fromMap(row));
 };
+
+export const deleteClient = (clientId: number): void => {
+	db.runSync('DELETE FROM clients WHERE id = ?', [clientId]);
+}
