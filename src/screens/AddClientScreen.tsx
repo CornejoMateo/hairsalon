@@ -1,0 +1,173 @@
+import React, { useState } from 'react';
+import {
+	View,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	Alert,
+	KeyboardAvoidingView,
+	Platform,
+	ScrollView,
+	StyleSheet,
+} from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import { useDatabase } from '../database/databaseProvider';
+import { main } from '../../constans/colors';
+
+type AddClientScreenProps = {
+	navigation: NativeStackNavigationProp<RootStackParamList, 'AddClient'>;
+};
+
+export default function AddClientScreen({ navigation }: AddClientScreenProps) {
+	const { db, isReady } = useDatabase();
+	const [name, setName] = useState('');
+	const [phone, setPhone] = useState('');
+	const [loading, setLoading] = useState(false);
+
+	const handleSubmit = async () => {
+		if (!name.trim()) {
+			Alert.alert('Error', 'El nombre es obligatorio');
+			return;
+		}
+
+		if (!db || !isReady) {
+			Alert.alert('Error', 'Base de datos no está lista');
+			return;
+		}
+
+		setLoading(true);
+
+		try {
+			await db.runAsync('INSERT INTO clients (name, phone) VALUES (?, ?)', [
+				name.trim(),
+				phone.trim() || null,
+			]);
+
+			Alert.alert('Éxito', 'Clienta agregada correctamente', [
+				{
+					text: 'OK',
+					onPress: () => {
+						setName('');
+						setPhone('');
+						navigation.goBack();
+					},
+				},
+			]);
+		} catch (error) {
+			console.error('Error al agregar clienta:', error);
+			Alert.alert('Error', 'No se pudo agregar la clienta');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	return (
+		<KeyboardAvoidingView
+			style={styles.container}
+			behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+		>
+			<ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+				<View style={styles.content}>
+					<View style={styles.inputGroup}>
+						<Text style={styles.label}>Nombre</Text>
+						<TextInput
+							style={styles.input}
+							value={name}
+							onChangeText={setName}
+							placeholder="Ingresa el nombre de la clienta"
+							placeholderTextColor="#9ca3af"
+						/>
+					</View>
+
+					<View style={styles.inputGroup}>
+						<Text style={styles.label}>Teléfono</Text>
+						<TextInput
+							style={styles.input}
+							value={phone}
+							onChangeText={setPhone}
+							placeholder="Ingresa el teléfono"
+							placeholderTextColor="#9ca3af"
+							keyboardType="phone-pad"
+						/>
+					</View>
+
+					<TouchableOpacity
+						style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+						onPress={handleSubmit}
+						disabled={loading}
+					>
+						<Text style={styles.submitButtonText}>
+							{loading ? 'Guardando...' : 'Guardar clienta'}
+						</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={styles.cancelButton}
+						onPress={() => navigation.goBack()}
+						disabled={loading}
+					>
+						<Text style={styles.cancelButtonText}>Cancelar</Text>
+					</TouchableOpacity>
+				</View>
+			</ScrollView>
+		</KeyboardAvoidingView>
+	);
+}
+
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		backgroundColor: '#f7f7fbff',
+	},
+	content: {
+		padding: 20,
+	},
+	inputGroup: {
+		marginBottom: 20,
+	},
+	label: {
+		fontSize: 16,
+		fontWeight: '600',
+		color: 'black',
+		marginBottom: 8,
+	},
+	input: {
+		backgroundColor: '#fff',
+		borderRadius: 8,
+		padding: 12,
+		fontSize: 16,
+		borderWidth: 1,
+		borderColor: '#e5e7eb',
+	},
+	submitButton: {
+		padding: 16,
+		borderRadius: 12,
+		alignItems: 'center',
+		marginTop: 8,
+		backgroundColor: main,
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 4,
+		elevation: 8,
+	},
+	submitButtonDisabled: {
+		backgroundColor: '#f9a8d4',
+	},
+	submitButtonText: {
+		color: '#fff',
+		fontSize: 16,
+		fontWeight: 'bold',
+	},
+	cancelButton: {
+		padding: 16,
+		borderRadius: 12,
+		alignItems: 'center',
+		marginTop: 8,
+	},
+	cancelButtonText: {
+		color: 'black',
+		fontSize: 16,
+	},
+});

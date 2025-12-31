@@ -26,6 +26,7 @@ export default function App() {
 						headerTitleStyle: {
 							fontWeight: 'bold',
 						},
+						headerBackTitle: 'Volver',
 					}}
 				>
 					<Stack.Screen
