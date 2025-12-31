@@ -68,7 +68,7 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 			</View>
 			<View style={styles.clientInfo}>
 				<Text style={styles.clientName}>{item.name}</Text>
-				<Text style={styles.clientPhone}>📱 {item.phone}</Text>
+				<Text style={styles.clientPhone}>{item.phone ? '📱' : 'Sin teléfono'} {item.phone}</Text>
 			</View>
 			<Text style={styles.chevron}>›</Text>
 		</TouchableOpacity>

@@ -44,7 +44,11 @@ export default function App() {
 						component={AddClientScreen}
 						options={{ title: 'Agregar clienta' }}
 					/>
-					<Stack.Screen name="HistoryClient" component={HistoryClientScreen} />
+					<Stack.Screen 
+						name="HistoryClient"
+						component={HistoryClientScreen} 
+						options={{ title: '' }}
+					/>
 					<Stack.Screen
 						name="AddHistory"
 						component={AddHistoryScreen}
