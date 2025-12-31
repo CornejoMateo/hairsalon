@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { TouchableOpacity, Text } from 'react-native';
 import { DatabaseProvider } from './src/database/databaseProvider';
 import { RootStackParamList } from './src/navigation/AppNavigator';
 import HomeScreen from './src/screens/HomeScreen';
@@ -47,12 +48,25 @@ export default function App() {
 					<Stack.Screen 
 						name="HistoryClient"
 						component={HistoryClientScreen} 
-						options={{ title: '' }}
+						options={({ navigation, route }) => ({
+							title: '',
+							headerRight: () => (
+								<TouchableOpacity
+									onPress={() => navigation.navigate('AddHistory', {
+										clientId: route.params.clientId,
+										clientName: route.params.clientName
+									})}
+									style={{ marginRight: 8 }}
+								>
+									<Text style={{ color: '#fff', fontSize: 32, fontWeight: '300' }}>+</Text>
+								</TouchableOpacity>
+							),
+						})}
 					/>
 					<Stack.Screen
 						name="AddHistory"
 						component={AddHistoryScreen}
-						options={{ title: 'Agregar turno' }}
+						options={{ title: 'Agregar servicio' }}
 					/>
 				</Stack.Navigator>
 			</NavigationContainer>

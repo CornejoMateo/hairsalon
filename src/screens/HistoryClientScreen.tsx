@@ -99,15 +99,6 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 				</View>
 			)}
 
-			{!loading && history.length > 0 && (
-				<TouchableOpacity
-					style={styles.addButton}
-					onPress={() => navigation.navigate('AddHistory', { clientId, clientName })}
-					activeOpacity={0.8}
-				>
-					<Text style={styles.addButtonText}>Agregar servicio</Text>
-				</TouchableOpacity>
-			)}
 		</SafeAreaView>
 	);
 }
