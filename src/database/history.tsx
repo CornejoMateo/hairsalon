@@ -20,7 +20,7 @@ export const insertHistory = (history: {
 };
 
 export const getHistoryByClient = (client_id: number): History[] => {
-	const rows = db.getAllSync('SELECT * FROM history WHERE client_id = ?', [client_id]);
+	const rows = db.getAllSync('SELECT * FROM history WHERE client_id = ? ORDER BY date DESC', [client_id]);
 	return rows.map((row) => History.fromMap(row));
 };
 

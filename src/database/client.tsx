@@ -10,7 +10,7 @@ export const insertClient = (client: { name: string; phone: string }): number =>
 };
 
 export const getClients = (): Client[] => {
-	const rows = db.getAllSync('SELECT * FROM clients');
+	const rows = db.getAllSync('SELECT * FROM clients ORDER BY name ASC');
 	return rows.map((row) => Client.fromMap(row));
 };
 
