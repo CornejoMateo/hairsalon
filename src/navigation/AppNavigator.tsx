@@ -4,4 +4,5 @@ export type RootStackParamList = {
 	AddClient: undefined;
 	HistoryClient: { clientId: number; clientName: string };
 	AddHistory: { clientId: number; clientName: string };
+	Backup: undefined;
 };

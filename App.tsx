@@ -9,6 +9,7 @@ import ClientListScreen from './src/screens/ClientListScreen';
 import AddClientScreen from './src/screens/AddClientScreen';
 import HistoryClientScreen from './src/screens/HistoryClientScreen';
 import AddHistoryScreen from './src/screens/AddHistoryScreen';
+import BackupScreen from './src/screens/BackupScreen';
 import { main } from './constans/colors';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -67,6 +68,11 @@ export default function App() {
 						name="AddHistory"
 						component={AddHistoryScreen}
 						options={{ title: 'Agregar servicio' }}
+					/>
+					<Stack.Screen
+						name="Backup"
+						component={BackupScreen}
+						options={{ title: 'Backup y restauración' }}
 					/>
 				</Stack.Navigator>
 			</NavigationContainer>
