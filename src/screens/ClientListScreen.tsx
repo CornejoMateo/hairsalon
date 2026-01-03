@@ -105,6 +105,19 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 				<Text style={styles.chevron}>›</Text>
 			</TouchableOpacity>
 			<TouchableOpacity
+				style={styles.editButton}
+				onPress={() =>
+					navigation.navigate('AddClient', {
+						clientId: item.id ?? undefined,
+						clientName: item.name,
+						clientPhone: item.phone,
+					})
+				}
+				activeOpacity={0.7}
+			>
+				<Text style={styles.editIcon}>✏️</Text>
+			</TouchableOpacity>
+			<TouchableOpacity
 				style={styles.deleteButton}
 				onPress={() => handleDeleteClient(item)}
 				activeOpacity={0.7}
@@ -367,5 +380,19 @@ const styles = StyleSheet.create({
 		color: '#FFFFFF',
 		fontSize: 16,
 		fontWeight: '700',
+	},
+	editButton: {
+		width: 52,
+		height: 52,
+		justifyContent: 'center',
+		alignItems: 'center',
+		shadowColor: '#2563EB',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.15,
+		shadowRadius: 4,
+		elevation: 3,
+	},
+	editIcon: {
+		fontSize: 15,
 	},
 });

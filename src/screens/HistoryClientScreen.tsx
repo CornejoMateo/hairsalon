@@ -18,7 +18,7 @@ import { getHistoryByClient, deleteHistory } from '../database/history';
 import History from '../models/History';
 import { main } from '../../constans/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { formatDate, formatCost } from '../utils/HistoryClient';
+import { formatDate } from '../utils/HistoryClient';
 
 type HistoryClientScreenNavigationProp = NativeStackNavigationProp<
 	RootStackParamList,
@@ -86,16 +86,30 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 		<View style={styles.row}>
 			<Text style={styles.cellDate}>{formatDate(item.date)}</Text>
 			<Text style={styles.cellDescription}>{item.description || '-'}</Text>
-			<Text style={styles.cellCost}>{formatCost(item.cost)}</Text>
-			<Text style={styles.cellAction}>
+			<Text style={styles.cellCost}>${item.cost}</Text>
+			<View style={styles.cellAction}>
 				<TouchableOpacity
-					style={styles.deleteButton}
+					onPress={() =>
+						navigation.navigate('AddHistory', {
+							clientId,
+							clientName,
+							historyId: item.id || undefined,
+							description: item.description,
+							cost: item.cost,
+							date: item.date,
+						})
+					}
+					activeOpacity={0.7}
+				>
+					<Text style={styles.editIcon}>✏️</Text>
+				</TouchableOpacity>
+				<TouchableOpacity
 					onPress={() => handleDeleteHistory(item)}
 					activeOpacity={0.7}
 				>
 					<Text style={styles.deleteIcon}>🗑️</Text>
 				</TouchableOpacity>
-			</Text>
+			</View>
 		</View>
 	);
 
@@ -127,7 +141,7 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 						<Text style={styles.headerCellDate}>Fecha</Text>
 						<Text style={styles.headerCellDescription}>Descripción</Text>
 						<Text style={styles.headerCellCost}>Costo</Text>
-						<Text style={styles.HeaderCellAction}>Eliminar</Text>
+						<Text style={styles.HeaderCellAction}>Acciones</Text>
 					</View>
 
 					<FlatList
@@ -226,9 +240,11 @@ const styles = StyleSheet.create({
 		color: '#059669',
 		fontWeight: '600',
 		textAlign: 'center',
+		paddingHorizontal: 5,
 	},
 	cellAction: {
 		flex: 0.25,
+		flexDirection: 'row',
 		justifyContent: 'center',
 		alignItems: 'center',
 	},
@@ -299,14 +315,12 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontWeight: '700',
 	},
-	deleteButton: {
-		justifyContent: 'center',
-		alignItems: 'center',
-		width: '100%',
+	editIcon: {
+		fontSize: 20,
+		marginHorizontal: 8,
 	},
 	deleteIcon: {
-		textAlign: 'center',
-		alignItems: 'center',
-		justifyContent: 'center'
-	}
+		fontSize: 20,
+		marginHorizontal: 8,
+	},
 });

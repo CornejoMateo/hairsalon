@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
 	View,
 	Text,
@@ -11,19 +11,35 @@ import {
 	StyleSheet,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useDatabase } from '../database/databaseProvider';
 import { main } from '../../constans/colors';
 
+type AddClientScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AddClient'>;
+type AddClientScreenRouteProp = RouteProp<RootStackParamList, 'AddClient'>;
+
 type AddClientScreenProps = {
-	navigation: NativeStackNavigationProp<RootStackParamList, 'AddClient'>;
+	navigation: AddClientScreenNavigationProp;
+	route: AddClientScreenRouteProp;
 };
 
-export default function AddClientScreen({ navigation }: AddClientScreenProps) {
+export default function AddClientScreen({ navigation, route }: AddClientScreenProps) {
 	const { db, isReady } = useDatabase();
 	const [name, setName] = useState('');
 	const [phone, setPhone] = useState('');
 	const [loading, setLoading] = useState(false);
+
+	const isEditing = route.params?.clientId !== undefined;
+
+	useEffect(() => {
+		if (route.params?.clientName) {
+			setName(route.params.clientName);
+		}
+		if (route.params?.clientPhone) {
+			setPhone(route.params.clientPhone);
+		}
+	}, [route.params]);
 
 	const handleSubmit = async () => {
 		if (!name.trim()) {
@@ -39,24 +55,36 @@ export default function AddClientScreen({ navigation }: AddClientScreenProps) {
 		setLoading(true);
 
 		try {
-			await db.runAsync('INSERT INTO clients (name, phone) VALUES (?, ?)', [
-				name.trim(),
-				phone.trim() || null,
-			]);
-
-			Alert.alert('Éxito', 'Clienta agregada correctamente', [
-				{
-					text: 'OK',
-					onPress: () => {
-						setName('');
-						setPhone('');
-						navigation.goBack();
+			if (isEditing) {
+				await db.runAsync(
+					'UPDATE clients SET name = ?, phone = ? WHERE id = ?',
+					[name.trim(), phone.trim() || null, route.params?.clientId]
+				);
+				Alert.alert('Éxito', 'Clienta actualizada correctamente', [
+					{
+						text: 'OK',
+						onPress: () => navigation.goBack(),
 					},
-				},
-			]);
+				]);
+			} else {
+				await db.runAsync('INSERT INTO clients (name, phone) VALUES (?, ?)', [
+					name.trim(),
+					phone.trim() || null,
+				]);
+				Alert.alert('Éxito', 'Clienta agregada correctamente', [
+					{
+						text: 'OK',
+						onPress: () => {
+							setName('');
+							setPhone('');
+							navigation.goBack();
+						},
+					},
+				]);
+			}
 		} catch (error) {
-			console.error('Error al agregar clienta:', error);
-			Alert.alert('Error', 'No se pudo agregar la clienta');
+			console.error('Error al guardar clienta:', error);
+			Alert.alert('Error', 'No se pudo guardar la clienta');
 		} finally {
 			setLoading(false);
 		}
@@ -69,6 +97,8 @@ export default function AddClientScreen({ navigation }: AddClientScreenProps) {
 		>
 			<ScrollView contentContainerStyle={{ flexGrow: 1 }}>
 				<View style={styles.content}>
+					<Text style={styles.title}>{isEditing ? 'Editar clienta' : 'Agregar clienta'}</Text>
+					
 					<View style={styles.inputGroup}>
 						<Text style={styles.label}>Nombre</Text>
 						<TextInput
@@ -98,7 +128,7 @@ export default function AddClientScreen({ navigation }: AddClientScreenProps) {
 						disabled={loading}
 					>
 						<Text style={styles.submitButtonText}>
-							{loading ? 'Guardando...' : 'Guardar clienta'}
+							{loading ? (isEditing ? 'Actualizando...' : 'Guardando...') : (isEditing ? 'Actualizar clienta' : 'Guardar clienta')}
 						</Text>
 					</TouchableOpacity>
 
@@ -122,6 +152,12 @@ const styles = StyleSheet.create({
 	},
 	content: {
 		padding: 20,
+	},
+	title: {
+		fontSize: 24,
+		fontWeight: 'bold',
+		color: 'black',
+		marginBottom: 24,
 	},
 	inputGroup: {
 		marginBottom: 20,

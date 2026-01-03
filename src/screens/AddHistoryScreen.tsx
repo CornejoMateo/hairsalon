@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
 	View,
 	Text,
@@ -15,6 +15,7 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useDatabase } from '../database/databaseProvider';
 import { main } from '../../constans/colors';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 type AddHistoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AddHistory'>;
 type AddHistoryScreenRouteProp = RouteProp<RootStackParamList, 'AddHistory'>;
@@ -29,18 +30,27 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 	const { db, isReady } = useDatabase();
 	const [description, setDescription] = useState('');
 	const [cost, setCost] = useState('');
-	const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
+	const [date, setDate] = useState(new Date());
+	const [showDatePicker, setShowDatePicker] = useState(false);
 	const [loading, setLoading] = useState(false);
+
+	const isEditing = route.params?.historyId !== undefined;
+
+	useEffect(() => {
+		if (route.params?.description) {
+			setDescription(route.params.description);
+		}
+		if (route.params?.cost) {
+			setCost(route.params.cost);
+		}
+		if (route.params?.date) {
+			setDate(new Date(route.params.date));
+		}
+	}, [route.params]);
 
 	const handleSubmit = async () => {
 		if (!description.trim()) {
 			Alert.alert('Error', 'La descripción es obligatoria');
-			return;
-		}
-
-		const costNumber = parseFloat(cost);
-		if (isNaN(costNumber) || costNumber <= 0) {
-			Alert.alert('Error', 'El costo debe ser un número válido mayor a 0');
 			return;
 		}
 
@@ -52,20 +62,34 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 		setLoading(true);
 
 		try {
-			await db.runAsync(
-				'INSERT INTO history (client_id, description, cost, date) VALUES (?, ?, ?, ?)',
-				[clientId, description.trim(), costNumber, date]
-			);
-
-			Alert.alert('Éxito', 'Servicio agregado correctamente', [
-				{
-					text: 'OK',
-					onPress: () => navigation.goBack(),
-				},
-			]);
+			const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD
+			
+			if (isEditing) {
+				await db.runAsync(
+					'UPDATE history SET description = ?, cost = ?, date = ? WHERE id = ?',
+					[description.trim(), cost, formattedDate, route.params?.historyId]
+				);
+				Alert.alert('Éxito', 'Servicio actualizado correctamente', [
+					{
+						text: 'OK',
+						onPress: () => navigation.goBack(),
+					},
+				]);
+			} else {
+				await db.runAsync(
+					'INSERT INTO history (client_id, description, cost, date) VALUES (?, ?, ?, ?)',
+					[clientId, description.trim(), cost, formattedDate]
+				);
+				Alert.alert('Éxito', 'Servicio agregado correctamente', [
+					{
+						text: 'OK',
+						onPress: () => navigation.goBack(),
+					},
+				]);
+			}
 		} catch (error) {
-			console.error('Error al agregar servicio:', error);
-			Alert.alert('Error', 'No se pudo agregar el servicio');
+			console.error('Error al guardar servicio:', error);
+			Alert.alert('Error', 'No se pudo guardar el servicio');
 		} finally {
 			setLoading(false);
 		}
@@ -78,6 +102,8 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 		>
 			<ScrollView contentContainerStyle={{ flexGrow: 1 }}>
 				<View style={styles.content}>
+					<Text style={styles.title}>{isEditing ? 'Editar servicio' : 'Agregar servicio'}</Text>
+					
 					<View style={styles.clientInfo}>
 						<Text style={styles.clientLabel}>Clienta</Text>
 						<Text style={styles.clientName}>{clientName}</Text>
@@ -103,24 +129,40 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 								style={[styles.input, styles.costInput]}
 								value={cost}
 								onChangeText={setCost}
-								placeholder="0.00"
 								placeholderTextColor="#9ca3af"
-								keyboardType="decimal-pad"
 							/>
 						</View>
 					</View>
 
 					<View style={styles.inputGroup}>
-						<Text style={styles.label}>Fecha</Text>
-						<TextInput
-							style={styles.input}
-							value={date}
-							onChangeText={setDate}
-							placeholder="YYYY-MM-DD"
-							placeholderTextColor="#9ca3af"
-						/>
-						<Text style={styles.hint}>Formato: Año-Mes-Día</Text>
+						<TouchableOpacity
+							style={styles.dateButton}
+							onPress={() => setShowDatePicker(true)}
+						>
+							<Text style={styles.dateText}>
+								{date.toLocaleDateString('es-ES', {
+									year: 'numeric',
+									month: 'long',
+									day: 'numeric',
+								})}
+							</Text>
+							<Text style={styles.calendarIcon}>📅</Text>
+						</TouchableOpacity>
 					</View>
+
+					{showDatePicker && (
+						<DateTimePicker
+							value={date}
+							mode="date"
+							display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+							onChange={(event, selectedDate) => {
+								setShowDatePicker(Platform.OS === 'ios');
+								if (selectedDate) {
+									setDate(selectedDate);
+								}
+							}}
+						/>
+					)}
 
 					<TouchableOpacity
 						style={[styles.submitButton, loading && styles.submitButtonDisabled]}
@@ -128,7 +170,7 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 						disabled={loading}
 					>
 						<Text style={styles.submitButtonText}>
-							{loading ? 'Guardando...' : 'Guardar servicio'}
+							{loading ? (isEditing ? 'Actualizando...' : 'Guardando...') : (isEditing ? 'Actualizar servicio' : 'Guardar servicio')}
 						</Text>
 					</TouchableOpacity>
 
@@ -153,6 +195,12 @@ const styles = StyleSheet.create({
 	content: {
 		padding: 20,
 		marginHorizontal: 20,
+	},
+	title: {
+		fontSize: 24,
+		fontWeight: 'bold',
+		color: '#1E293B',
+		marginBottom: 16,
 	},
 	clientInfo: {
 		backgroundColor: '#FFFFFF',
@@ -195,6 +243,25 @@ const styles = StyleSheet.create({
 		height: 80,
 		textAlignVertical: 'top',
 	},
+	dateButton: {
+		backgroundColor: '#FFFFFF',
+		borderWidth: 1,
+		borderColor: '#E2E8F0',
+		borderRadius: 12,
+		padding: 14,
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+	},
+	dateText: {
+		fontSize: 16,
+		color: '#1E293B',
+		fontWeight: '500',
+	},
+	calendarIcon: {
+		fontSize: 20,
+		paddingLeft: 14,
+	},
 	costContainer: {
 		flexDirection: 'row',
 		alignItems: 'center',
@@ -202,7 +269,7 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: '#E2E8F0',
 		borderRadius: 12,
-		paddingLeft: 14,
+		paddingHorizontal: 14,
 	},
 	currencySymbol: {
 		fontSize: 18,

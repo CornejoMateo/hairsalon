@@ -7,8 +7,3 @@ export const formatDate = (dateString: string | null) => {
         year: 'numeric',
     });
 };
-
-export const formatCost = (cost: number | null) => {
-    if (!cost) return '-';
-    return `$${cost.toFixed(2)}`;
-};

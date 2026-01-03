@@ -137,7 +137,6 @@ export default function BackupScreen({ navigation }: BackupProps) {
 		try {
 			setLoading(true);
 
-			// Seleccionar archivo de clientas
 			const resultClients = await DocumentPicker.getDocumentAsync({
 				type: 'text/comma-separated-values',
 				copyToCacheDirectory: true,
@@ -148,7 +147,6 @@ export default function BackupScreen({ navigation }: BackupProps) {
 				return;
 			}
 
-			// Seleccionar archivo de historial
 			const resultHistory = await DocumentPicker.getDocumentAsync({
 				type: 'text/comma-separated-values',
 				copyToCacheDirectory: true,
@@ -159,7 +157,6 @@ export default function BackupScreen({ navigation }: BackupProps) {
 				return;
 			}
 
-			// Restaurar clientas
 			const fileClients = new File(resultClients.assets[0].uri);
 			const fileContentClients = await fileClients.text();
 			const clients = parseCSV(fileContentClients);
@@ -177,7 +174,6 @@ export default function BackupScreen({ navigation }: BackupProps) {
 				}
 			}
 
-			// Restaurar historial
 			const fileHistory = new File(resultHistory.assets[0].uri);
 			const fileContentHistory = await fileHistory.text();
 			const historyRecords = parseCSV(fileContentHistory);
