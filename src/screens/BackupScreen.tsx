@@ -62,7 +62,7 @@ export default function BackupScreen({ navigation }: BackupProps) {
 			const clientsCSV = convertToCSV(clientsResult, ['id', 'name', 'phone']);
 
 			// get all works
-			const historyResult = db.getAllSync('SELECT * FROM history ORDER BY id');
+			const historyResult = db.getAllSync('SELECT id, client_id, description, CAST(cost AS TEXT) as cost, date FROM history ORDER BY id');
 			const historyCSV = convertToCSV(historyResult, [
 				'id',
 				'client_id',

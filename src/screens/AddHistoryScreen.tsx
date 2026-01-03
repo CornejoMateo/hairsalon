@@ -130,6 +130,7 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 								value={cost}
 								onChangeText={setCost}
 								placeholderTextColor="#9ca3af"
+								keyboardType="numbers-and-punctuation"
 							/>
 						</View>
 					</View>
