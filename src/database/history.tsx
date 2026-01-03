@@ -5,7 +5,7 @@ export const insertHistory = (history: {
 	client_id: number;
 	description?: string;
 	date?: string;
-	cost?: number;
+	cost?: string;
 }): number => {
 	const result = db.runSync(
 		'INSERT INTO history (client_id, description, date, cost) VALUES (?, ?, ?, ?)',

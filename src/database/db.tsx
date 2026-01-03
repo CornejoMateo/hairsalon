@@ -18,7 +18,7 @@ export const initDB = () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       client_id INTEGER NOT NULL,
       description TEXT,
-      cost REAL,
+      cost TEXT,
       date TEXT,
       FOREIGN KEY(client_id) REFERENCES clients(id) ON DELETE CASCADE
     );
