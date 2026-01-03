@@ -8,6 +8,7 @@ import {
 	Alert,
 	StatusBar,
 	TextInput,
+	Linking,
 } from 'react-native';
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
@@ -83,6 +84,29 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 		);
 	};
 
+	const handleOpenWhatsApp = (phone: string | null) => {
+		if (!phone) {
+			Alert.alert('Error', 'Esta clienta no tiene número de teléfono');
+			return;
+		}
+		
+		const cleanPhone = phone.replace(/\D/g, '');
+		
+		const url = `https://wa.me/${cleanPhone}`;
+		
+		Linking.canOpenURL(url)
+			.then((supported) => {
+				if (supported) {
+					return Linking.openURL(url);
+				} else {
+					Alert.alert('Error', 'No se puede abrir WhatsApp');
+				}
+			})
+			.catch((err) => {
+				Alert.alert('Error', 'No se pudo abrir WhatsApp');
+			});
+	};
+
 	const renderClient = ({ item }: { item: Client }) => (
 		<View style={styles.clientItemWrapper}>
 			<TouchableOpacity
@@ -98,9 +122,21 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 				<View style={[styles.avatar, { backgroundColor: main }]}>
 					<Text style={styles.avatarText}>{getInitials(item.name || null)}</Text>
 				</View>
-				<View style={styles.clientInfo}>
+				<View style={styles.clientInfo} pointerEvents="box-none">
 					<Text style={styles.clientName}>{item.name}</Text>
-					<Text style={styles.clientPhone}>{item.phone ? '📱' : 'Sin teléfono'} {item.phone}</Text>
+					{item.phone ? (
+						<TouchableOpacity 
+							onPress={(e) => {
+								handleOpenWhatsApp(item.phone);
+							}} 
+							activeOpacity={0.7}
+							style={styles.phoneButton}
+						>
+							<Text style={styles.clientPhone}>📱 {item.phone}</Text>
+						</TouchableOpacity>
+					) : (
+						<Text style={styles.clientPhone}>Sin teléfono</Text>
+					)}
 				</View>
 				<Text style={styles.chevron}>›</Text>
 			</TouchableOpacity>
@@ -316,6 +352,9 @@ const styles = StyleSheet.create({
 	clientInfo: {
 		flex: 1,
 		gap: 4,
+	},
+	phoneButton: {
+		alignSelf: 'flex-start',
 	},
 	clientName: {
 		fontSize: 17,
