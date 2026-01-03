@@ -256,7 +256,7 @@ export default function BackupScreen({ navigation }: BackupProps) {
 							<Text style={styles.buttonTitle}>Restaurar datos</Text>
 							<Text style={styles.buttonSubtitle}>Importa datos desde archivos CSV</Text>
 						</View>
-						<Text style={styles.chevron}>›</Text>
+						<Text style={styles.chevronRestore}>›</Text>
 					</View>
 				</TouchableOpacity>
 
@@ -356,7 +356,12 @@ const styles = StyleSheet.create({
 	},
 	chevron: {
 		fontSize: 32,
-		color: '#6366F1',
+		color: main,
+		fontWeight: '300',
+	},
+	chevronRestore: {
+		fontSize: 32,
+		color: '#10B981',
 		fontWeight: '300',
 	},
 	infoBox: {
