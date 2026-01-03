@@ -16,4 +16,5 @@ export const getClients = (): Client[] => {
 
 export const deleteClient = (clientId: number): void => {
 	db.runSync('DELETE FROM clients WHERE id = ?', [clientId]);
+	db.runSync('DELETE FROM history WHERE client_id = ?', [clientId]);
 }

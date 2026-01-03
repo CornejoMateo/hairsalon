@@ -81,28 +81,13 @@ export default function BackupScreen({ navigation }: BackupProps) {
 			await clientsFile.write(clientsCSV);
 			await historyFile.write(historyCSV);
 
-			Alert.alert('Backup creado', 'Se han creado los archivos CSV. ¿Deseas compartirlos ahora?', [
-				{
-					text: 'Cancelar',
-					style: 'cancel',
-				},
-				{
-					text: 'Compartir clientas',
-					onPress: async () => {
-						if (await Sharing.isAvailableAsync()) {
-							await Sharing.shareAsync(clientsFile.uri);
-						}
-					},
-				},
-				{
-					text: 'Compartir trabajos',
-					onPress: async () => {
-						if (await Sharing.isAvailableAsync()) {
-							await Sharing.shareAsync(historyFile.uri);
-						}
-					},
-				},
-			]);
+			if (await Sharing.isAvailableAsync()) {
+				await Sharing.shareAsync(clientsFile.uri);
+				await new Promise(resolve => setTimeout(resolve, 1000));
+				await Sharing.shareAsync(historyFile.uri);
+			} else {
+				Alert.alert('Backup creado', 'Los archivos CSV han sido guardados.');
+			}
 		} catch (error) {
 			console.error('Error al crear backup:', error);
 			Alert.alert('Error', 'No se pudo crear el backup: ' + error);
@@ -150,101 +135,73 @@ export default function BackupScreen({ navigation }: BackupProps) {
 
 	const handleRestore = async () => {
 		try {
-			Alert.alert('Seleccionar archivo', '¿Qué tipo de datos deseas restaurar?', [
-				{
-					text: 'Cancelar',
-					style: 'cancel',
-				},
-				{
-					text: 'Clientes',
-					onPress: () => restoreClients(),
-				},
-				{
-					text: 'Historial',
-					onPress: () => restoreHistory(),
-				},
-			]);
-		} catch (error) {
-			console.error('Error al restaurar:', error);
-			Alert.alert('Error', 'No se pudo restaurar los datos: ' + error);
-		}
-	};
-
-	const restoreClients = async () => {
-		try {
 			setLoading(true);
 
-			const result = await DocumentPicker.getDocumentAsync({
+			// Seleccionar archivo de clientas
+			const resultClients = await DocumentPicker.getDocumentAsync({
 				type: 'text/comma-separated-values',
 				copyToCacheDirectory: true,
 			});
 
-			if (result.canceled) {
+			if (resultClients.canceled) {
 				setLoading(false);
 				return;
 			}
 
-			const file = new File(result.assets[0].uri);
-			const fileContent = await file.text();
+			// Seleccionar archivo de historial
+			const resultHistory = await DocumentPicker.getDocumentAsync({
+				type: 'text/comma-separated-values',
+				copyToCacheDirectory: true,
+			});
 
-			const clients = parseCSV(fileContent);
+			if (resultHistory.canceled) {
+				setLoading(false);
+				return;
+			}
 
-			let insertedCount = 0;
+			// Restaurar clientas
+			const fileClients = new File(resultClients.assets[0].uri);
+			const fileContentClients = await fileClients.text();
+			const clients = parseCSV(fileContentClients);
+
+			let upsertedClients = 0;
 			for (const clientData of clients) {
 				try {
-					db.runSync('INSERT INTO clients (name, phone) VALUES (?, ?)', [
-						clientData.name,
-						clientData.phone,
-					]);
-					insertedCount++;
+					db.runSync(
+						'INSERT OR REPLACE INTO clients (id, name, phone) VALUES (?, ?, ?)',
+						[clientData.id, clientData.name, clientData.phone]
+					);
+					upsertedClients++;
 				} catch (err) {
-					console.error('Error al insertar cliente:', err);
+					console.error('Error al insertar/actualizar clienta:', err);
 				}
 			}
 
-			Alert.alert('Éxito', `Se han restaurado ${insertedCount} clientas`);
-		} catch (error) {
-			Alert.alert('Error', 'No se pudo restaurar las clientas: ' + error);
-		} finally {
-			setLoading(false);
-		}
-	};
+			// Restaurar historial
+			const fileHistory = new File(resultHistory.assets[0].uri);
+			const fileContentHistory = await fileHistory.text();
+			const historyRecords = parseCSV(fileContentHistory);
 
-	const restoreHistory = async () => {
-		try {
-			setLoading(true);
-
-			const result = await DocumentPicker.getDocumentAsync({
-				type: 'text/comma-separated-values',
-				copyToCacheDirectory: true,
-			});
-
-			if (result.canceled) {
-				setLoading(false);
-				return;
-			}
-
-			const file = new File(result.assets[0].uri);
-			const fileContent = await file.text();
-
-			const historyRecords = parseCSV(fileContent);
-
-			let insertedCount = 0;
+			let upsertedHistory = 0;
 			for (const historyData of historyRecords) {
 				try {
 					db.runSync(
-						'INSERT INTO history (client_id, description, cost, date) VALUES (?, ?, ?, ?)',
-						[historyData.client_id, historyData.description, historyData.cost, historyData.date]
+						'INSERT OR REPLACE INTO history (id, client_id, description, cost, date) VALUES (?, ?, ?, ?, ?)',
+						[historyData.id, historyData.client_id, historyData.description, historyData.cost, historyData.date]
 					);
-					insertedCount++;
+					upsertedHistory++;
 				} catch (err) {
-					console.error('Error al insertar historial:', err);
+					console.error('Error al insertar/actualizar historial:', err);
 				}
 			}
 
-			Alert.alert('Éxito', `Se han restaurado ${insertedCount} registros de historial de trabajos`);
+			Alert.alert(
+				'Éxito',
+				`Se han restaurado:\n${upsertedClients} clientas\n${upsertedHistory} registros de historial`
+			);
 		} catch (error) {
-			Alert.alert('Error', 'No se pudo restaurar el historial de trabajos: ' + error);
+			console.error('Error al restaurar:', error);
+			Alert.alert('Error', 'No se pudo restaurar los datos: ' + error);
 		} finally {
 			setLoading(false);
 		}
@@ -306,9 +263,10 @@ export default function BackupScreen({ navigation }: BackupProps) {
 				<View style={styles.infoBox}>
 					<Text style={styles.infoTitle}>ℹ️ Información</Text>
 					<Text style={styles.infoText}>
-						• Los archivos CSV se pueden guardar en Google Drive u otra aplicación{'\n'}• Cada tabla
-						se exporta en un archivo separado{'\n'}• Al restaurar, selecciona el tipo de datos
-						correcto{'\n'}• Los datos restaurados se añadirán a los existentes
+					• El backup exporta ambas tablas (clientas y trabajos) juntas{'\n'}
+					• Al restaurar, debes seleccionar primero el archivo de clientas y luego el de trabajos{'\n'}
+					• Los datos se actualizan o insertan según el ID del backup{'\n'}
+					• Esto mantiene la integridad entre clientas y sus historiales
 					</Text>
 				</View>
 			</View>
