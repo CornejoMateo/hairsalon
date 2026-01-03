@@ -2,7 +2,7 @@ export default class History {
 	id: number | null;
 	client_id: number;
 	description: string | null;
-	cost: number | null;
+	cost: string | null;
 	date: string | null;
 
 	constructor({
@@ -16,7 +16,7 @@ export default class History {
 		client_id: number;
 		description?: string | null;
 		date?: string | null;
-		cost?: number | null;
+		cost?: string | null;
 	}) {
 		this.id = id;
 		this.client_id = client_id;
