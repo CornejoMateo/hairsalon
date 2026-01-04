@@ -186,7 +186,7 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 			) : (
 				<View style={styles.listWrapper}>
 					<View style={styles.statsBar}>
-						<Text style={styles.statsText}>Mis clientas</Text>
+						<Text style={styles.statsText}>Mis clientas({filteredClients.length})</Text>
 						<TouchableOpacity
 							style={styles.addButton}
 							onPress={() => navigation.navigate('AddClient')}
