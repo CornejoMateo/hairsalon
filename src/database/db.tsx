@@ -24,6 +24,16 @@ export const initDB = () => {
     );
   `);
 
+  // table company
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS company (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nameCompany TEXT,
+      mainColor TEXT,
+      logoUrl TEXT
+    );
+  `);
+
 };
 
 export default db;
