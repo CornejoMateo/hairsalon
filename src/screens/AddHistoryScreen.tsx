@@ -14,8 +14,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useDatabase } from '../database/databaseProvider';
-import { main } from '../../constans/colors';
+import { main, defaultColor } from '../../constans/colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useCompany } from '../context/CompanyContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type AddHistoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AddHistory'>;
 type AddHistoryScreenRouteProp = RouteProp<RootStackParamList, 'AddHistory'>;
@@ -28,6 +30,8 @@ interface AddHistoryScreenProps {
 export default function AddHistoryScreen({ navigation, route }: AddHistoryScreenProps) {
 	const { clientId, clientName } = route.params;
 	const { db, isReady } = useDatabase();
+	const { company } = useCompany();
+	const mainColor = company?.mainColor || defaultColor;
 	const [description, setDescription] = useState('');
 	const [cost, setCost] = useState('');
 	const [date, setDate] = useState(new Date());
@@ -104,9 +108,9 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 				<View style={styles.content}>
 					<Text style={styles.title}>{isEditing ? 'Editar servicio' : 'Agregar servicio'}</Text>
 					
-					<View style={styles.clientInfo}>
+					<View style={[styles.clientInfo, { borderColor: mainColor }]}>
 						<Text style={styles.clientLabel}>Clienta</Text>
-						<Text style={styles.clientName}>{clientName}</Text>
+						<Text style={[styles.clientName, { color: mainColor }]}>{clientName}</Text>
 					</View>
 
 					<View style={styles.inputGroup}>
@@ -138,7 +142,7 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 					<View style={styles.inputGroup}>
 						<TouchableOpacity
 							style={styles.dateButton}
-							onPress={() => setShowDatePicker(true)}
+							onPress={() => setShowDatePicker(!showDatePicker)}
 						>
 							<Text style={styles.dateText}>
 								{date.toLocaleDateString('es-ES', {
@@ -166,7 +170,7 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 					)}
 
 					<TouchableOpacity
-						style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+						style={[styles.submitButton, { backgroundColor: mainColor, shadowColor: mainColor }, loading && styles.submitButtonDisabled]}
 						onPress={handleSubmit}
 						disabled={loading}
 					>
@@ -209,7 +213,6 @@ const styles = StyleSheet.create({
 		borderRadius: 12,
 		marginBottom: 20,
 		borderWidth: 2,
-		borderColor: main,
 	},
 	clientLabel: {
 		fontSize: 12,
@@ -219,7 +222,6 @@ const styles = StyleSheet.create({
 	},
 	clientName: {
 		fontSize: 20,
-		color: main,
 		fontWeight: 'bold',
 	},
 	inputGroup: {
@@ -290,12 +292,10 @@ const styles = StyleSheet.create({
 		fontStyle: 'italic',
 	},
 	submitButton: {
-		backgroundColor: main,
 		paddingVertical: 16,
 		borderRadius: 12,
 		alignItems: 'center',
 		marginTop: 10,
-		shadowColor: main,
 		shadowOffset: { width: 0, height: 4 },
 		shadowOpacity: 0.3,
 		shadowRadius: 8,

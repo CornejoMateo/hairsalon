@@ -14,7 +14,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useDatabase } from '../database/databaseProvider';
-import { main } from '../../constans/colors';
+import { main, defaultColor } from '../../constans/colors';
+import { useCompany } from '../context/CompanyContext';
 
 type AddClientScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AddClient'>;
 type AddClientScreenRouteProp = RouteProp<RootStackParamList, 'AddClient'>;
@@ -26,6 +27,8 @@ type AddClientScreenProps = {
 
 export default function AddClientScreen({ navigation, route }: AddClientScreenProps) {
 	const { db, isReady } = useDatabase();
+	const { company } = useCompany();
+	const mainColor = company?.mainColor || defaultColor;
 	const [name, setName] = useState('');
 	const [phone, setPhone] = useState('');
 	const [loading, setLoading] = useState(false);
@@ -123,7 +126,7 @@ export default function AddClientScreen({ navigation, route }: AddClientScreenPr
 					</View>
 
 					<TouchableOpacity
-						style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+						style={[styles.submitButton, { backgroundColor: mainColor }, loading && styles.submitButtonDisabled]}
 						onPress={handleSubmit}
 						disabled={loading}
 					>
@@ -181,7 +184,6 @@ const styles = StyleSheet.create({
 		borderRadius: 12,
 		alignItems: 'center',
 		marginTop: 8,
-		backgroundColor: main,
 		shadowColor: '#000',
 		shadowOffset: { width: 0, height: 4 },
 		shadowOpacity: 0.3,

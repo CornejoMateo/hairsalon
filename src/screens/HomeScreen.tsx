@@ -4,6 +4,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { main } from '../../constans/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCompany } from '../context/CompanyContext';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -12,6 +13,9 @@ interface HomeProps {
 }
 
 export default function HomeScreen({ navigation }: HomeProps) {
+
+	const { company } = useCompany();
+	
 	return (
 		<SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
 			<StatusBar barStyle="light-content" backgroundColor={main} />
@@ -19,7 +23,13 @@ export default function HomeScreen({ navigation }: HomeProps) {
 			<View style={styles.content}>
 				<Text style={styles.sectionTitle}>Secciones</Text>
 				<TouchableOpacity
-					style={styles.mainButton}
+					style={[
+						styles.mainButton,
+						{ 
+							shadowColor: company?.mainColor || main,
+							borderColor: company?.mainColor || main
+						}
+					]}
 					onPress={() => navigation.navigate('ClientList')}
 					activeOpacity={0.8}
 				>
@@ -31,13 +41,19 @@ export default function HomeScreen({ navigation }: HomeProps) {
 							<Text style={styles.buttonTitle}>Mis clientas</Text>
 							<Text style={styles.buttonSubtitle}>Ver y gestionar todas tus clientas</Text>
 						</View>
-						<Text style={styles.chevron}>›</Text>
+						<Text style={[styles.chevron, {color: company?.mainColor || main}]}>›</Text>
 					</View>
 				</TouchableOpacity>
 
 				<View style={styles.bottomRightContainer}>
 					<TouchableOpacity
-						style={styles.backupButton}
+						style={[
+							styles.backupButton,
+							{ 
+								shadowColor: company?.mainColor || main,
+								borderColor: company?.mainColor || main
+							}
+						]}
 						onPress={() => navigation.navigate('Backup')}
 						activeOpacity={0.8}
 					>
@@ -62,6 +78,12 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 20,
 		paddingTop: 24,
 	},
+	companyName: {
+		fontSize: 28,
+		fontWeight: 'bold',
+		color: '#1E293B',
+		marginBottom: 8,
+	},
 	sectionTitle: {
 		fontSize: 18,
 		fontWeight: 'bold',
@@ -73,13 +95,11 @@ const styles = StyleSheet.create({
 		borderRadius: 20,
 		padding: 20,
 		marginBottom: 24,
-		shadowColor: main,
 		shadowOffset: { width: 0, height: 4 },
 		shadowOpacity: 0.15,
 		shadowRadius: 12,
 		elevation: 5,
 		borderWidth: 2,
-		borderColor: main,
 	},
 	buttonContent: {
 		flexDirection: 'row',
@@ -113,7 +133,6 @@ const styles = StyleSheet.create({
 	},
 	chevron: {
 		fontSize: 32,
-		color: '#6366F1',
 		fontWeight: '300',
 	},
 	bottomRightContainer: {
@@ -125,13 +144,11 @@ const styles = StyleSheet.create({
 		backgroundColor: '#FFFFFF',
 		borderRadius: 16,
 		padding: 16,
-		shadowColor: main,
 		shadowOffset: { width: 0, height: 4 },
 		shadowOpacity: 0.15,
 		shadowRadius: 8,
 		elevation: 5,
 		borderWidth: 2,
-		borderColor: main,
 		minWidth: 100,
 	},
 	backupContent: {

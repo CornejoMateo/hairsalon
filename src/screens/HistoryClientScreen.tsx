@@ -16,9 +16,10 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { getHistoryByClient, deleteHistory } from '../database/history';
 import History from '../models/History';
-import { main } from '../../constans/colors';
+import { main, defaultColor } from '../../constans/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatDate } from '../utils/HistoryClient';
+import { useCompany } from '../context/CompanyContext';
 
 type HistoryClientScreenNavigationProp = NativeStackNavigationProp<
 	RootStackParamList,
@@ -35,6 +36,8 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 	const { clientId, clientName } = route.params;
 	const [history, setHistory] = useState<History[]>([]);
 	const [loading, setLoading] = useState(true);
+	const { company } = useCompany();
+	const mainColor = company?.mainColor || defaultColor;
 
 	const loadHistory = () => {
 		try {
@@ -115,7 +118,7 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 
 	return (
 		<SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-			<StatusBar barStyle="light-content" backgroundColor={main} />
+			<StatusBar barStyle="light-content" backgroundColor={mainColor} />
 
 			{loading ? (
 				<View style={styles.loadingContainer}>
@@ -129,7 +132,7 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 						Aún no hay servicios registrados para esta clienta
 					</Text>
 					<TouchableOpacity
-						style={styles.addFirstButton}
+						style={[styles.addFirstButton, { backgroundColor: mainColor, shadowColor: mainColor }]}
 						onPress={() => navigation.navigate('AddHistory', { clientId, clientName })}
 					>
 						<Text style={styles.addFirstButtonText}>Agregar primer servicio</Text>
@@ -137,7 +140,7 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 				</View>
 			) : (
 				<View style={styles.tableContainer}>
-					<View style={styles.headerRow}>
+					<View style={[styles.headerRow, { backgroundColor: mainColor }]}>
 						<Text style={styles.headerCellDate}>Fecha</Text>
 						<Text style={styles.headerCellDescription}>Descripción</Text>
 						<Text style={styles.headerCellCost}>Costo</Text>
@@ -178,11 +181,10 @@ const styles = StyleSheet.create({
 	},
 	headerRow: {
 		flexDirection: 'row',
-		backgroundColor: main,
 		paddingVertical: 16,
 		paddingHorizontal: 12,
 		borderBottomWidth: 2,
-		borderBottomColor: '#4F46E5',
+		borderBottomColor: '#cacaca',
 	},
 	headerCellDate: {
 		flex: 0.25,
@@ -280,11 +282,9 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 	},
 	addFirstButton: {
-		backgroundColor: main,
 		paddingHorizontal: 32,
 		paddingVertical: 14,
 		borderRadius: 24,
-		shadowColor: main,
 		shadowOffset: { width: 0, height: 4 },
 		shadowOpacity: 0.3,
 		shadowRadius: 8,
@@ -292,25 +292,6 @@ const styles = StyleSheet.create({
 		marginTop: 24,
 	},
 	addFirstButtonText: {
-		color: '#FFFFFF',
-		fontSize: 16,
-		fontWeight: '700',
-	},
-	addButton: {
-		position: 'absolute',
-		bottom: 24,
-		right: 20,
-		backgroundColor: main,
-		paddingHorizontal: 24,
-		paddingVertical: 16,
-		borderRadius: 30,
-		shadowColor: main,
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.4,
-		shadowRadius: 12,
-		elevation: 8,
-	},
-	addButtonText: {
 		color: '#FFFFFF',
 		fontSize: 16,
 		fontWeight: '700',

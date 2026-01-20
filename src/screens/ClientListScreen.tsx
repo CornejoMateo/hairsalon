@@ -16,9 +16,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { getClients, deleteClient } from '../database/client';
 import Client from '../models/Client';
-import { main } from '../../constans/colors';
+import { main, defaultColor } from '../../constans/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getInitials } from '../utils/ClientList';
+import { useDatabase } from '../database/databaseProvider';
+import { useCompany } from '../context/CompanyContext';
 
 type ClientListScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ClientList'>;
 
@@ -30,6 +32,9 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 	const [clients, setClients] = useState<Client[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [searchText, setSearchText] = useState('');
+	const { isReady } = useDatabase();
+	const { company } = useCompany();
+	const mainColor = company?.mainColor || defaultColor;
 
 	const loadClients = () => {
 		try {
@@ -45,6 +50,10 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 
 	useFocusEffect(
 		useCallback(() => {
+			if (!isReady) {
+				Alert.alert('Error', 'La base de datos no está lista');
+				return;
+			}
 			loadClients(); 
 		}, [])
 	);
@@ -119,7 +128,7 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 				}
 				activeOpacity={0.7}
 			>
-				<View style={[styles.avatar, { backgroundColor: main }]}>
+				<View style={[styles.avatar, { backgroundColor: mainColor }]}>
 					<Text style={styles.avatarText}>{getInitials(item.name || null)}</Text>
 				</View>
 				<View style={styles.clientInfo} pointerEvents="box-none">
@@ -165,8 +174,7 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 
 	return (
 		<SafeAreaView style={styles.container} edges={['left', 'bottom', 'right']}>
-			<StatusBar barStyle="light-content" backgroundColor={main} />
-
+			<StatusBar barStyle="light-content" backgroundColor={mainColor} />
 			{loading ? (
 				<View style={styles.loadingContainer}>
 					<Text style={styles.loadingText}>Cargando...</Text>
@@ -177,7 +185,7 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 					<Text style={styles.emptyText}>No hay clientas aún</Text>
 					<Text style={styles.emptySubtext}>Comienza agregando tu primer clienta</Text>
 					<TouchableOpacity
-						style={styles.emptyButton}
+						style={[styles.emptyButton, { backgroundColor: mainColor, shadowColor: mainColor }]}
 						onPress={() => navigation.navigate('AddClient')}
 					>
 						<Text style={styles.emptyButtonText}>+ Agregar clienta</Text>
@@ -188,7 +196,7 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 					<View style={styles.statsBar}>
 						<Text style={styles.statsText}>Mis clientas({filteredClients.length})</Text>
 						<TouchableOpacity
-							style={styles.addButton}
+						style={[styles.addButton, { backgroundColor: mainColor, shadowColor: mainColor }]}
 							onPress={() => navigation.navigate('AddClient')}
 							activeOpacity={0.8}
 						>
@@ -232,11 +240,9 @@ const styles = StyleSheet.create({
 		backgroundColor: '#F8F9FF',
 	},
 	addButton: {
-		backgroundColor: main,
 		paddingHorizontal: 20,
 		paddingVertical: 10,
 		borderRadius: 20,
-		shadowColor: main,
 		shadowOffset: { width: 0, height: 2 },
 		shadowOpacity: 0.3,
 		shadowRadius: 6,
@@ -405,11 +411,9 @@ const styles = StyleSheet.create({
 		marginBottom: 24,
 	},
 	emptyButton: {
-		backgroundColor: '#6366F1',
 		paddingHorizontal: 32,
 		paddingVertical: 14,
 		borderRadius: 24,
-		shadowColor: '#6366F1',
 		shadowOffset: { width: 0, height: 4 },
 		shadowOpacity: 0.3,
 		shadowRadius: 8,

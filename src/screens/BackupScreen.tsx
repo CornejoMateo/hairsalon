@@ -10,12 +10,13 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { main } from '../../constans/colors';
+import { main, defaultColor } from '../../constans/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { File, Paths } from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import db from '../database/db';
+import { useCompany } from '../context/CompanyContext';
 
 type BackupScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Backup'>;
 
@@ -25,6 +26,8 @@ interface BackupProps {
 
 export default function BackupScreen({ navigation }: BackupProps) {
 	const [loading, setLoading] = useState(false);
+	const { company } = useCompany();
+	const mainColor = company?.mainColor || defaultColor;
 
 	const convertToCSV = (data: any[], headers: string[]): string => {
 		if (data.length === 0) {
@@ -205,7 +208,7 @@ export default function BackupScreen({ navigation }: BackupProps) {
 
 	return (
 		<SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-			<StatusBar barStyle="light-content" backgroundColor={main} />
+			<StatusBar barStyle="light-content" backgroundColor={mainColor} />
 
 			<View style={styles.content}>
 				<Text style={styles.title}>Gestión de backups</Text>
@@ -215,13 +218,13 @@ export default function BackupScreen({ navigation }: BackupProps) {
 
 				{loading && (
 					<View style={styles.loadingContainer}>
-						<ActivityIndicator size="large" color={main} />
+						<ActivityIndicator size="large" color={mainColor} />
 						<Text style={styles.loadingText}>Procesando...</Text>
 					</View>
 				)}
 
 				<TouchableOpacity
-					style={[styles.actionButton, styles.backupButtonStyle]}
+					style={[styles.actionButton, styles.backupButtonStyle, { borderColor: mainColor, shadowColor: mainColor }]}
 					onPress={handleBackup}
 					activeOpacity={0.8}
 					disabled={loading}
@@ -234,7 +237,7 @@ export default function BackupScreen({ navigation }: BackupProps) {
 							<Text style={styles.buttonTitle}>Hacer backup</Text>
 							<Text style={styles.buttonSubtitle}>Exporta tus datos como archivos CSV</Text>
 						</View>
-						<Text style={styles.chevron}>›</Text>
+						<Text style={[styles.chevron, { color: mainColor }]}>›</Text>
 					</View>
 				</TouchableOpacity>
 
@@ -306,7 +309,6 @@ const styles = StyleSheet.create({
 		borderRadius: 20,
 		padding: 20,
 		marginBottom: 16,
-		shadowColor: main,
 		shadowOffset: { width: 0, height: 4 },
 		shadowOpacity: 0.15,
 		shadowRadius: 12,
@@ -314,7 +316,6 @@ const styles = StyleSheet.create({
 	},
 	backupButtonStyle: {
 		borderWidth: 2,
-		borderColor: main,
 	},
 	restoreButtonStyle: {
 		borderWidth: 2,
@@ -352,7 +353,6 @@ const styles = StyleSheet.create({
 	},
 	chevron: {
 		fontSize: 32,
-		color: main,
 		fontWeight: '300',
 	},
 	chevronRestore: {
