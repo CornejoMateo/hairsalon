@@ -19,8 +19,8 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		try {
 			const database = SQLite.openDatabaseSync('hairsalon.db');
+			initDB(database);
 			setDb(database);
-			initDB();
 			setIsReady(true);
 		} catch (error) {
 			console.error('Error al inicializar la base de datos:', error);

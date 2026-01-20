@@ -2,7 +2,7 @@ import * as SQLite from 'expo-sqlite';
 
 const db = SQLite.openDatabaseSync('hairsalon.db');
 
-export const initDB = () => {
+export const initDB = (db: SQLite.SQLiteDatabase) => {
 	// table clients
 	db.execSync(`
     CREATE TABLE IF NOT EXISTS clients (
