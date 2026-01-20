@@ -28,7 +28,7 @@ La aplicación está diseñada bajo el enfoque **offline-first**, lo que permite
 - Control de cantidades disponibles
 - Seguimiento básico del consumo
 
-### 💾 Backups Manuales
+### 💾 Backups manuales
 - Exportación manual de los datos
 - Prevención de pérdida de información
 - Ideal para cambios de dispositivo o resguardo externo
@@ -120,7 +120,6 @@ npm run web
 Escanea el código QR con la app Expo Go (Android) o la cámara del iPhone para ejecutar en tu dispositivo.
 
 ```
-
 ## 📄 Licencia
 
 Este proyecto es privado.
