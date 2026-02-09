@@ -25,179 +25,104 @@ interface BackupProps {
 
 export default function BackupScreen({ navigation }: BackupProps) {
 	const [loading, setLoading] = useState(false);
-
-	const convertToCSV = (data: any[], headers: string[]): string => {
-		if (data.length === 0) {
-			return headers.join(',') + '\n';
-		}
-
-		const rows = data.map((item) => {
-			return headers
-				.map((header) => {
-					const value = item[header];
-
-					if (value === null || value === undefined) return '';
-					const stringValue = String(value);
-					if (
-						stringValue.includes(',') ||
-						stringValue.includes('"') ||
-						stringValue.includes('\n')
-					) {
-						return '"' + stringValue.replace(/"/g, '""') + '"';
-					}
-					return stringValue;
-				})
-				.join(',');
-		});
-
-		return headers.join(',') + '\n' + rows.join('\n');
-	};
+	const [infoPage, setInfoPage] = useState(1);
 
 	const handleBackup = async () => {
 		try {
 			setLoading(true);
 
-			// get all clients
-			const clientsResult = db.getAllSync('SELECT * FROM clients ORDER BY id');
-			const clientsCSV = convertToCSV(clientsResult, ['id', 'name', 'phone']);
+			const clients = db.getAllSync(
+				'SELECT id, name, phone FROM clients ORDER BY id'
+			);
 
-			// get all works
-			const historyResult = db.getAllSync('SELECT id, client_id, description, CAST(cost AS TEXT) as cost, date FROM history ORDER BY id');
-			const historyCSV = convertToCSV(historyResult, [
-				'id',
-				'client_id',
-				'description',
-				'cost',
-				'date',
-			]);
+			const history = db.getAllSync(
+				'SELECT id, client_id, description, cost, date FROM history ORDER BY id'
+			);
 
-			const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-			const clientsFileName = `peluqueria_clientas_backup_${timestamp}.csv`;
-			const historyFileName = `peluqueria_trabajos_backup_${timestamp}.csv`;
+			const backupData = {
+				app: 'PeluqueriaApp',
+				version: 1,
+				createdAt: new Date().toISOString(),
+				clients,
+				history,
+			};
 
-			const clientsFile = new File(Paths.cache, clientsFileName);
-			const historyFile = new File(Paths.cache, historyFileName);
+			const timestamp = new Date()
+				.toISOString()
+				.replace(/[:.]/g, '-')
+				.slice(0, -5);
 
-			await clientsFile.write(clientsCSV);
-			await historyFile.write(historyCSV);
+			const fileName = `peluqueria_backup_${timestamp}.json`;
+			const file = new File(Paths.cache, fileName);
+
+			await file.write(JSON.stringify(backupData, null, 2));
 
 			if (await Sharing.isAvailableAsync()) {
-				await Sharing.shareAsync(clientsFile.uri);
-				await new Promise(resolve => setTimeout(resolve, 1000));
-				await Sharing.shareAsync(historyFile.uri);
+				await Sharing.shareAsync(file.uri);
 			} else {
-				Alert.alert('Backup creado', 'Los archivos CSV han sido guardados.');
+				Alert.alert('Backup creado', 'El archivo fue guardado.');
 			}
 		} catch (error) {
 			console.error('Error al crear backup:', error);
-			Alert.alert('Error', 'No se pudo crear el backup: ' + error);
+			Alert.alert('Error', 'No se pudo crear el backup');
 		} finally {
 			setLoading(false);
 		}
-	};
-
-	const parseCSV = (csvContent: string): any[] => {
-		const lines = csvContent.split('\n').filter((line) => line.trim() !== '');
-		if (lines.length === 0) return [];
-
-		const headers = lines[0].split(',').map((h) => h.trim());
-		const data: any[] = [];
-
-		for (let i = 1; i < lines.length; i++) {
-			const values: string[] = [];
-			let currentValue = '';
-			let insideQuotes = false;
-
-			for (let j = 0; j < lines[i].length; j++) {
-				const char = lines[i][j];
-
-				if (char === '"') {
-					insideQuotes = !insideQuotes;
-				} else if (char === ',' && !insideQuotes) {
-					values.push(currentValue.replace(/""/g, '"'));
-					currentValue = '';
-				} else {
-					currentValue += char;
-				}
-			}
-			values.push(currentValue.replace(/""/g, '"'));
-
-			const row: any = {};
-			headers.forEach((header, index) => {
-				const value = values[index] || '';
-				row[header] = value === '' ? null : value;
-			});
-			data.push(row);
-		}
-
-		return data;
 	};
 
 	const handleRestore = async () => {
 		try {
 			setLoading(true);
 
-			const resultClients = await DocumentPicker.getDocumentAsync({
-				type: 'text/comma-separated-values',
+			const result = await DocumentPicker.getDocumentAsync({
+				type: 'application/json',
 				copyToCacheDirectory: true,
 			});
 
-			if (resultClients.canceled) {
+			if (result.canceled) {
 				setLoading(false);
 				return;
 			}
 
-			const resultHistory = await DocumentPicker.getDocumentAsync({
-				type: 'text/comma-separated-values',
-				copyToCacheDirectory: true,
-			});
+			const file = new File(result.assets[0].uri);
+			const content = await file.text();
+			const backup = JSON.parse(content);
 
-			if (resultHistory.canceled) {
-				setLoading(false);
-				return;
+			if (!backup.clients || !backup.history) {
+				throw new Error('Archivo de backup inválido');
 			}
-
-			const fileClients = new File(resultClients.assets[0].uri);
-			const fileContentClients = await fileClients.text();
-			const clients = parseCSV(fileContentClients);
 
 			let upsertedClients = 0;
-			for (const clientData of clients) {
-				try {
-					db.runSync(
-						'INSERT OR REPLACE INTO clients (id, name, phone) VALUES (?, ?, ?)',
-						[clientData.id, clientData.name, clientData.phone]
-					);
-					upsertedClients++;
-				} catch (err) {
-					console.error('Error al insertar/actualizar clienta:', err);
-				}
+			for (const client of backup.clients) {
+				db.runSync(
+					'INSERT OR REPLACE INTO clients (id, name, phone) VALUES (?, ?, ?)',
+					[client.id, client.name, client.phone]
+				);
+				upsertedClients++;
 			}
 
-			const fileHistory = new File(resultHistory.assets[0].uri);
-			const fileContentHistory = await fileHistory.text();
-			const historyRecords = parseCSV(fileContentHistory);
-
 			let upsertedHistory = 0;
-			for (const historyData of historyRecords) {
-				try {
-					db.runSync(
-						'INSERT OR REPLACE INTO history (id, client_id, description, cost, date) VALUES (?, ?, ?, ?, ?)',
-						[historyData.id, historyData.client_id, historyData.description, historyData.cost, historyData.date]
-					);
-					upsertedHistory++;
-				} catch (err) {
-					console.error('Error al insertar/actualizar historial:', err);
-				}
+			for (const record of backup.history) {
+				db.runSync(
+					'INSERT OR REPLACE INTO history (id, client_id, description, cost, date) VALUES (?, ?, ?, ?, ?)',
+					[
+						record.id,
+						record.client_id,
+						record.description,
+						record.cost, 
+						record.date,
+					]
+				);
+				upsertedHistory++;
 			}
 
 			Alert.alert(
 				'Éxito',
-				`Se han restaurado:\n${upsertedClients} clientas\n${upsertedHistory} registros de historial`
+				`Se restauraron:\n${upsertedClients} clientas\n${upsertedHistory} trabajos`
 			);
 		} catch (error) {
 			console.error('Error al restaurar:', error);
-			Alert.alert('Error', 'No se pudo restaurar los datos: ' + error);
+			Alert.alert('Error', 'No se pudo restaurar el backup');
 		} finally {
 			setLoading(false);
 		}
@@ -210,7 +135,7 @@ export default function BackupScreen({ navigation }: BackupProps) {
 			<View style={styles.content}>
 				<Text style={styles.title}>Gestión de backups</Text>
 				<Text style={styles.subtitle}>
-					Guarda tus datos de forma segura o restaura información desde archivos CSV
+					Guarda tus datos de forma segura o restaura información desde archivos JSON
 				</Text>
 
 				{loading && (
@@ -232,7 +157,7 @@ export default function BackupScreen({ navigation }: BackupProps) {
 						</View>
 						<View style={styles.buttonTextContainer}>
 							<Text style={styles.buttonTitle}>Hacer backup</Text>
-							<Text style={styles.buttonSubtitle}>Exporta tus datos como archivos CSV</Text>
+							<Text style={styles.buttonSubtitle}>Exporta tus datos como archivos JSON</Text>
 						</View>
 						<Text style={styles.chevron}>›</Text>
 					</View>
@@ -250,20 +175,44 @@ export default function BackupScreen({ navigation }: BackupProps) {
 						</View>
 						<View style={styles.buttonTextContainer}>
 							<Text style={styles.buttonTitle}>Restaurar datos</Text>
-							<Text style={styles.buttonSubtitle}>Importa datos desde archivos CSV</Text>
+							<Text style={styles.buttonSubtitle}>Importa datos desde archivos JSON</Text>
 						</View>
 						<Text style={styles.chevronRestore}>›</Text>
 					</View>
 				</TouchableOpacity>
 
 				<View style={styles.infoBox}>
-					<Text style={styles.infoTitle}>ℹ️ Información</Text>
-					<Text style={styles.infoText}>
-					• El backup exporta ambas tablas (clientas y trabajos) juntas{'\n'}
-					• Al restaurar, debes seleccionar primero el archivo de clientas y luego el de trabajos{'\n'}
-					• Los datos se actualizan o insertan según el ID del backup{'\n'}
-					• Esto mantiene la integridad entre clientas y sus historiales
-					</Text>
+					<Text style={styles.infoTitle}>ℹ️ Información {infoPage}/2</Text>
+					
+					{infoPage === 1 ? (
+						<Text style={styles.infoText}>
+						• El backup exporta ambas tablas (clientas y trabajos) juntas en un mismo archivo{'\n'}
+						• Al restaurar, debes seleccionar el archivo JSON que contiene ambos datos{'\n'}
+						• Los datos se actualizan o insertan según el ID del backup
+						</Text>
+					) : (
+						<Text style={styles.infoText}>
+						• Esto mantiene la integridad entre clientas y sus historiales{'\n'}
+						• IMPORTANTE: la base de datos debe estar vacía para restaurar correctamente. De lo contrario se pueden generar conflictos o datos duplicados
+						</Text>
+					)}
+
+					<View style={styles.paginationContainer}>
+						<TouchableOpacity
+							style={[styles.pageButton, infoPage === 1 && styles.pageButtonDisabled]}
+							onPress={() => setInfoPage(1)}
+							disabled={infoPage === 1}
+						>
+							<Text style={[styles.pageButtonText, infoPage === 1 && styles.pageButtonTextActive]}>1</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							style={[styles.pageButton, infoPage === 2 && styles.pageButtonDisabled]}
+							onPress={() => setInfoPage(2)}
+							disabled={infoPage === 2}
+						>
+							<Text style={[styles.pageButtonText, infoPage === 2 && styles.pageButtonTextActive]}>2</Text>
+						</TouchableOpacity>
+					</View>
 				</View>
 			</View>
 		</SafeAreaView>
@@ -378,5 +327,31 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		color: '#64748B',
 		lineHeight: 22,
+	},
+	paginationContainer: {
+		flexDirection: 'row',
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginTop: 16,
+		gap: 12,
+	},
+	pageButton: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: '#E2E8F0',
+		justifyContent: 'center',
+		alignItems: 'center',
+	},
+	pageButtonDisabled: {
+		backgroundColor: main,
+	},
+	pageButtonText: {
+		fontSize: 16,
+		fontWeight: 'bold',
+		color: '#64748B',
+	},
+	pageButtonTextActive: {
+		color: '#FFFFFF',
 	},
 });
