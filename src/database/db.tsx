@@ -6,7 +6,7 @@ export const initDB = (db: SQLite.SQLiteDatabase) => {
 	// table clients
 	db.execSync(`
     CREATE TABLE IF NOT EXISTS clients (
-      id INTEGER PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
       phone TEXT
     );
@@ -15,7 +15,7 @@ export const initDB = (db: SQLite.SQLiteDatabase) => {
 	// table history
 	db.execSync(`
     CREATE TABLE IF NOT EXISTS history (
-      id INTEGER PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       client_id INTEGER NOT NULL,
       description TEXT,
       cost TEXT,
