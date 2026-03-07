@@ -19,7 +19,6 @@ import Client from '../models/Client';
 import { main } from '../../constans/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getInitials } from '../utils/ClientList';
-import { useDatabase } from '../database/databaseProvider';
 
 type ClientListScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ClientList'>;
 
@@ -31,14 +30,13 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 	const [clients, setClients] = useState<Client[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [searchText, setSearchText] = useState('');
-	const { db, isReady } = useDatabase();
 
 	const loadClients = () => {
 		try {
 			const data = getClients();
 			setClients(data);
 		} catch (error) {
-			Alert.alert('Error', 'No se pudieron cargar los clientes');
+			Alert.alert('Error', 'No se pudieron cargar los clientes, por favor reinicie la aplicación');
 			console.error(error);
 		} finally {
 			setLoading(false);
@@ -47,9 +45,6 @@ export default function ClientsListScreen({ navigation }: ClientsListProps) {
 
 	useFocusEffect(
 		useCallback(() => {
-			if (!isReady) {
-				Alert.alert('Error', 'La base de datos no está lista');
-			}
 			loadClients(); 
 		}, [])
 	);

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import * as SQLite from 'expo-sqlite';
-import { initDB } from './db';
+import db, { initDB } from './db';
 import { main } from '../../constans/colors';
 
 type DatabaseContextType = {
@@ -15,17 +15,15 @@ const DatabaseContext = createContext<DatabaseContextType>({
 });
 
 export function DatabaseProvider({ children }: { children: React.ReactNode }) {
-	const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
 	const [isReady, setIsReady] = useState(false);
 
 	useEffect(() => {
 		try {
-			const database = SQLite.openDatabaseSync('hairsalon.db');
-			initDB(database);
-			setDb(database);
+			initDB(db);
 			setIsReady(true);
 		} catch (error) {
 			console.error('Error al inicializar la base de datos:', error);
+			Alert.alert('Error', 'No se pudo inicializar la base de datos. Por favor, reinicia la aplicación.');
 		}
 	}, []);
 

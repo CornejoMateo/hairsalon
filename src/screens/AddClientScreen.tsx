@@ -13,7 +13,7 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { useDatabase } from '../database/databaseProvider';
+import { insertClient, updateClient } from '../database/client';
 import { main } from '../../constans/colors';
 
 type AddClientScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AddClient'>;
@@ -25,7 +25,6 @@ type AddClientScreenProps = {
 };
 
 export default function AddClientScreen({ navigation, route }: AddClientScreenProps) {
-	const { db, isReady } = useDatabase();
 	const [name, setName] = useState('');
 	const [phone, setPhone] = useState('');
 	const [loading, setLoading] = useState(false);
@@ -41,14 +40,9 @@ export default function AddClientScreen({ navigation, route }: AddClientScreenPr
 		}
 	}, [route.params]);
 
-	const handleSubmit = async () => {
+	const handleSubmit = () => {
 		if (!name.trim()) {
 			Alert.alert('Error', 'El nombre es obligatorio');
-			return;
-		}
-
-		if (!db || !isReady) {
-			Alert.alert('Error', 'Base de datos no está lista');
 			return;
 		}
 
@@ -56,10 +50,11 @@ export default function AddClientScreen({ navigation, route }: AddClientScreenPr
 
 		try {
 			if (isEditing) {
-				await db.runAsync(
-					'UPDATE clients SET name = ?, phone = ? WHERE id = ?',
-					[name.trim(), phone.trim() || null, route.params?.clientId]
-				);
+				updateClient({
+					id: route.params?.clientId!,
+					name: name.trim(),
+					phone: phone.trim(),
+				});
 				Alert.alert('Éxito', 'Clienta actualizada correctamente', [
 					{
 						text: 'OK',
@@ -67,10 +62,10 @@ export default function AddClientScreen({ navigation, route }: AddClientScreenPr
 					},
 				]);
 			} else {
-				await db.runAsync('INSERT INTO clients (name, phone) VALUES (?, ?)', [
-					name.trim(),
-					phone.trim() || null,
-				]);
+				insertClient({
+					name: name.trim(),
+					phone: phone.trim(),
+				});
 				Alert.alert('Éxito', 'Clienta agregada correctamente', [
 					{
 						text: 'OK',
@@ -85,7 +80,7 @@ export default function AddClientScreen({ navigation, route }: AddClientScreenPr
 		} catch (error) {
 			console.error('Error al guardar clienta:', error);
 			Alert.alert('Error', 'No se pudo guardar la clienta');
-		} finally {
+
 			setLoading(false);
 		}
 	};

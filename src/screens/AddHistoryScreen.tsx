@@ -13,7 +13,7 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { useDatabase } from '../database/databaseProvider';
+import { insertHistory, updateHistory } from '../database/history';
 import { main } from '../../constans/colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -27,7 +27,6 @@ interface AddHistoryScreenProps {
 
 export default function AddHistoryScreen({ navigation, route }: AddHistoryScreenProps) {
 	const { clientId, clientName } = route.params;
-	const { db, isReady } = useDatabase();
 	const [description, setDescription] = useState('');
 	const [cost, setCost] = useState('');
 	const [date, setDate] = useState(new Date());
@@ -48,14 +47,9 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 		}
 	}, [route.params]);
 
-	const handleSubmit = async () => {
+	const handleSubmit = () => {
 		if (!description.trim()) {
 			Alert.alert('Error', 'La descripción es obligatoria');
-			return;
-		}
-
-		if (!db || !isReady) {
-			Alert.alert('Error', 'Base de datos no está lista');
 			return;
 		}
 
@@ -65,10 +59,12 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 			const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD
 			
 			if (isEditing) {
-				await db.runAsync(
-					'UPDATE history SET description = ?, cost = ?, date = ? WHERE id = ?',
-					[description.trim(), cost, formattedDate, route.params?.historyId]
-				);
+				updateHistory({
+					id: route.params?.historyId!,
+					description: description.trim(),
+					cost: cost,
+					date: formattedDate,
+				});
 				Alert.alert('Éxito', 'Servicio actualizado correctamente', [
 					{
 						text: 'OK',
@@ -76,10 +72,12 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 					},
 				]);
 			} else {
-				await db.runAsync(
-					'INSERT INTO history (client_id, description, cost, date) VALUES (?, ?, ?, ?)',
-					[clientId, description.trim(), cost, formattedDate]
-				);
+				insertHistory({
+					client_id: clientId,
+					description: description.trim(),
+					cost: cost,
+					date: formattedDate,
+				});
 				Alert.alert('Éxito', 'Servicio agregado correctamente', [
 					{
 						text: 'OK',
@@ -90,7 +88,6 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 		} catch (error) {
 			console.error('Error al guardar servicio:', error);
 			Alert.alert('Error', 'No se pudo guardar el servicio');
-		} finally {
 			setLoading(false);
 		}
 	};

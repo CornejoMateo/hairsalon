@@ -14,6 +14,18 @@ export const getClients = (): Client[] => {
 	return rows.map((row) => Client.fromMap(row));
 };
 
+export const updateClient = (client: {
+	id: number;
+	name: string;
+	phone?: string;
+}): void => {
+	db.runSync('UPDATE clients SET name = ?, phone = ? WHERE id = ?', [
+		client.name,
+		client.phone || null,
+		client.id,
+	]);
+};
+
 export const deleteClient = (clientId: number): void => {
 	db.runSync('DELETE FROM clients WHERE id = ?', [clientId]);
 	db.runSync('DELETE FROM history WHERE client_id = ?', [clientId]);

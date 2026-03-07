@@ -24,6 +24,23 @@ export const getHistoryByClient = (client_id: number): History[] => {
 	return rows.map((row) => History.fromMap(row));
 };
 
+export const updateHistory = (history: {
+	id: number;
+	description?: string;
+	date?: string;
+	cost?: string;
+}): void => {
+	db.runSync(
+		'UPDATE history SET description = ?, date = ?, cost = ? WHERE id = ?',
+		[
+			history.description || null,
+			history.date || null,
+			history.cost || null,
+			history.id,
+		]
+	);
+};
+
 export const deleteHistory = (historyId: number): void => {
 	db.runSync('DELETE FROM history WHERE id = ?', [historyId]);
 }
