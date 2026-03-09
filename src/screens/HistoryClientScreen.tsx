@@ -18,7 +18,7 @@ import { getHistoryByClient, deleteHistory } from '../database/history';
 import History from '../models/History';
 import { main } from '../../constans/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { formatDate } from '../utils/HistoryClient';
+import { formatDateForDisplay } from '../utils/HistoryClient';
 
 type HistoryClientScreenNavigationProp = NativeStackNavigationProp<
 	RootStackParamList,
@@ -84,7 +84,9 @@ export default function HistoryClientScreen({ navigation, route }: HistoryClient
 
 	const renderHistoryItem = ({ item }: { item: History }) => (
 		<View style={styles.row}>
-			<Text style={styles.cellDate}>{formatDate(item.date)}</Text>
+			<Text style={styles.cellDate}>
+				{formatDateForDisplay(item.date || '')}
+			</Text>
 			<Text style={styles.cellDescription}>{item.description || '-'}</Text>
 			<Text style={styles.cellCost}>${item.cost}</Text>
 			<View style={styles.cellAction}>

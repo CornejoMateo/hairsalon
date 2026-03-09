@@ -16,6 +16,7 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { insertHistory, updateHistory } from '../database/history';
 import { main } from '../../constans/colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { formatDateForDB, parseDateFromDB } from '../utils/HistoryClient';
 
 type AddHistoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AddHistory'>;
 type AddHistoryScreenRouteProp = RouteProp<RootStackParamList, 'AddHistory'>;
@@ -43,7 +44,7 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 			setCost(route.params.cost);
 		}
 		if (route.params?.date) {
-			setDate(new Date(route.params.date));
+			setDate(parseDateFromDB(route.params.date));
 		}
 	}, [route.params]);
 
@@ -56,14 +57,12 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 		setLoading(true);
 
 		try {
-			const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD
-			
 			if (isEditing) {
 				updateHistory({
 					id: route.params?.historyId!,
 					description: description.trim(),
 					cost: cost,
-					date: formattedDate,
+					date: formatDateForDB(date),
 				});
 				Alert.alert('Éxito', 'Servicio actualizado correctamente', [
 					{
@@ -76,7 +75,7 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 					client_id: clientId,
 					description: description.trim(),
 					cost: cost,
-					date: formattedDate,
+					date: formatDateForDB(date),
 				});
 				Alert.alert('Éxito', 'Servicio agregado correctamente', [
 					{
@@ -137,11 +136,7 @@ export default function AddHistoryScreen({ navigation, route }: AddHistoryScreen
 							onPress={() => setShowDatePicker(true)}
 						>
 							<Text style={styles.dateText}>
-								{date.toLocaleDateString('es-ES', {
-									year: 'numeric',
-									month: 'long',
-									day: 'numeric',
-								})}
+								{date ? date.toLocaleDateString() : 'Seleccionar fecha'}
 							</Text>
 							<Text style={styles.calendarIcon}>📅</Text>
 						</TouchableOpacity>
